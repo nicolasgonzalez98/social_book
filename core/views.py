@@ -10,8 +10,9 @@ from .decorators import unauthorized_user
 @login_required(login_url='signin')
 def index(request):
     user_object = User.objects.get(username = request.user.username)
+    print(user_object.id)
     user_profile = Profile.objects.get(user=user_object)
-    
+    print(user_profile.id_user)
     posts = Post.objects.all()
     feed_list = []
 
@@ -30,6 +31,22 @@ def upload(request):
         return redirect('/')
     else:
         return redirect('/')
+
+@login_required(login_url='signin')
+def profile(request, pk):
+    user_object = User.objects.get(username=pk)
+    user_profile = Profile.objects.get(user = user_object)
+    user_posts = Post.objects.filter(user = pk)
+    no_of_posts = len(user_posts)
+    
+    ctx = {
+        'user_object':user_object,
+        'user_profile':user_profile,
+        'user_posts':user_posts,
+        'no_of_posts':no_of_posts
+    }
+
+    return render(request, 'profile.html',ctx)
 
 @login_required(login_url='signin')
 def like_post(request):
