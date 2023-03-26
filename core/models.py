@@ -18,7 +18,7 @@ class Profile(models.Model):
     
 class Post(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    user = models.CharField(max_length=100)
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE)
     image = models.ImageField(upload_to='post_images')
     caption = models.TextField()
     created_at = models.DateTimeField(default=datetime.now)
@@ -28,8 +28,15 @@ class Post(models.Model):
         return self.user
     
 class LikePost(models.Model):
-    post_id = models.CharField(max_length=500)
+    post_id = models.ForeignKey(Post, on_delete=models.CASCADE)
     username = models.CharField(max_length=100)
 
     def __str__(self):
         return self.username
+    
+class FollowersCount(models.Model):
+    follower = models.CharField(max_length=200)
+    user = models.CharField(max_length=200)
+    
+    def __str__(self):
+        return self.user

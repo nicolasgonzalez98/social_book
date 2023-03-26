@@ -10,9 +10,7 @@ from .decorators import unauthorized_user
 @login_required(login_url='signin')
 def index(request):
     user_object = User.objects.get(username = request.user.username)
-    print(user_object.id)
     user_profile = Profile.objects.get(user=user_object)
-    print(user_profile.id_user)
     posts = Post.objects.all()
     feed_list = []
 
@@ -22,11 +20,12 @@ def index(request):
 @login_required(login_url='signin')
 def upload(request):
     if request.method == 'POST':
-        user = request.user.username
+        user = User.objects.get(username = request.user.username)
+        profile = Profile.objects.get(user = user)
         image = request.FILES.get('image_upload')
         caption = request.POST['caption']
 
-        new_post = Post.objects.create(user=user, image=image, caption=caption)
+        new_post = Post.objects.create(user=profile, image=image, caption=caption)
         new_post.save()
         return redirect('/')
     else:
@@ -36,28 +35,62 @@ def upload(request):
 def profile(request, pk):
     user_object = User.objects.get(username=pk)
     user_profile = Profile.objects.get(user = user_object)
-    user_posts = Post.objects.filter(user = pk)
+    user_posts = Post.objects.filter(user = user_profile)
     no_of_posts = len(user_posts)
+    local_user = request.user.username
     
+    
+
+    if FollowersCount.objects.filter(follower=local_user, user = pk).first() == None:    
+        text_button = 'Follow'
+    else:
+        text_button = 'Unfollow'
+
+    if local_user == pk:
+        text_button = ''
+
+    followers = len(FollowersCount.objects.filter(user = pk))
+    following = len(FollowersCount.objects.filter(follower = pk))                
     ctx = {
         'user_object':user_object,
         'user_profile':user_profile,
         'user_posts':user_posts,
-        'no_of_posts':no_of_posts
+        'no_of_posts':no_of_posts,
+        'text_button': text_button,
+        'followers':followers,
+        'following':following
     }
 
     return render(request, 'profile.html',ctx)
+
+@login_required(login_url='signin')
+def follow(request):
+    if request.method == 'POST':
+        user_local = request.user
+        user_followed = request.GET.get('user_followed')
+        
+        if FollowersCount.objects.filter(follower=user_local, user = user_followed).first() == None:
+            new_follow = FollowersCount.objects.create(follower=user_local.username, user = user_followed)
+            new_follow.save()
+            return redirect(f'profile/{user_followed}') 
+        else:
+            follow = FollowersCount.objects.filter(follower=user_local, user = user_followed).first() 
+            follow.delete()
+            return redirect(f'profile/{user_followed}')
+        
+    else:
+        return redirect(f'profile/{user_followed}')
 
 @login_required(login_url='signin')
 def like_post(request):
     post_id = request.GET.get('post_id')
     username = request.user.username
     post = Post.objects.get(id = post_id)
-
-    like_post = LikePost.objects.filter(post_id = post_id, username=username).first()
+    
+    like_post = LikePost.objects.filter(post_id = post, username=username).first()
     
     if like_post == None:
-        new_like = LikePost.objects.create(post_id = post_id, username = username)
+        new_like = LikePost.objects.create(post_id = post, username = username)
         new_like.save()
         post.no_of_likes = post.no_of_likes + 1
         post.save()

@@ -27,9 +27,10 @@
 	<section>
 			<div class="feature-photo">
 				<figure><img src="{% static 'images/resources/timeline-1.jpg' %}" alt=""></figure>
-				<form>
+				<form action="/follow?user_followed={{user_profile.user.username}}" method="POST" enctype="multipart/form-data">
+					{% csrf_token %}
 					<div class="add-btn">
-					<!-- <span style="color: white; font-size: 27px; margin-right: 520px;"><b><u><a href="/">Home</a></u></b></span> -->
+					<span style="color: white; font-size: 27px; "><b><a href="/">Home</a></b></span>
 					{% if no_of_posts == 0 %}
 					<span style="color: white; font-size: 27px;"><b>No Post</b></span>
 					{% elif no_of_posts == 1 %}
@@ -38,9 +39,18 @@
 					<span style="color: white; font-size: 27px;"><b>{{no_of_posts}} Posts</b></span>
 					{% endif %}
 					
-					<span style="color: white; font-size: 27px;"><b>1.7m followers</b></span>
-					<span style="color: white; font-size: 27px;"><b>3.5k following</b></span>
-					<a href="" title="" data-ripple=""><button style="background-color: #ffc0cb; border: #ffc0cb;">Follow</button></a>
+					{% if followers == 0 or followers == 1%}
+					<span style="color: white; font-size: 27px;"><b>{{followers}} follower</b></span>
+					{% else %}
+					<span style="color: white; font-size: 27px;"><b>{{followers}} followers</b></span>
+					{% endif %}
+					
+					<span style="color: white; font-size: 27px;"><b>{{following}} following</b></span>
+					{% if text_button == '' %}
+					<a href="/settings"><button type="submit" style="background-color: #ffc0cb; border: #ffc0cb;">Settings</button></a>
+					{% else %}
+					<a><button type="submit" style="background-color: #ffc0cb; border: #ffc0cb;">{{text_button}}</button></a>
+					{% endif %}
 					
 					</div>
 				</form>
