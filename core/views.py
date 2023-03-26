@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from .models import *
 from .decorators import unauthorized_user
+from itertools import chain
 
 # Create your views here.
 @login_required(login_url='signin')
@@ -12,9 +13,25 @@ def index(request):
     user_object = User.objects.get(username = request.user.username)
     user_profile = Profile.objects.get(user=user_object)
     posts = Post.objects.all()
-    feed_list = []
+    
+    user_following_list = []
+    feed = []
 
-    ctx = {'user_profile':user_profile, 'posts':posts }
+    user_following = FollowersCount.objects.filter(follower = request.user.username)
+
+    for user in user_following:
+        user_following_list.append(user)
+
+    print(user_following_list)
+
+    for username in user_following_list:
+        newuser = User.objects.get(username = username)
+        profile = Profile.objects.get(user=newuser)
+        feed_lists = Post.objects.filter(user=profile)
+        feed.append(feed_lists)
+
+    feed_list = list(chain(*feed))
+    ctx = {'user_profile':user_profile, 'posts':feed_list }
     return render(request, 'index.html', ctx)
 
 @login_required(login_url='signin')
@@ -38,8 +55,6 @@ def profile(request, pk):
     user_posts = Post.objects.filter(user = user_profile)
     no_of_posts = len(user_posts)
     local_user = request.user.username
-    
-    
 
     if FollowersCount.objects.filter(follower=local_user, user = pk).first() == None:    
         text_button = 'Follow'
